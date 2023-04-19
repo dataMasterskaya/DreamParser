@@ -11,7 +11,7 @@ from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 from selenium.common.exceptions import WebDriverException
 from selenium.common.exceptions import NoSuchElementException
-from typing import Tuple, List, Dict
+from typing import Tuple, List, Dict, Union
 from utils import setup_logging
 
 headers = {
@@ -55,7 +55,7 @@ def get_company_field(level: str) -> str:
         return company_field
 
 
-def get_description_date(link: str) -> Tuple[str, date]:
+def get_description_date(link: str) -> Tuple[str, Union[date, None]]:
     """opens a link for each vacancy and retrieves information about the vacancy description
     and the date of its publication, which are not in the jobcard"""
     try:
