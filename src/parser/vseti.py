@@ -13,6 +13,7 @@ from selenium.common.exceptions import WebDriverException
 from selenium.common.exceptions import NoSuchElementException
 from typing import Tuple, List, Dict, Union
 from utils import setup_logging
+import os
 
 headers = {
     "Accept": "application/json, text/javascript, */*; q=0.01",
@@ -142,12 +143,13 @@ def write_to_csv(results: List[Tuple[str, str, str, str, str, str, str, date, st
     """writes information to a file"""
     if not results:
         logging.error(f'No results for the choosen period')
-    with open(filename, mode='w', encoding='utf-8', newline='') as file:
+    filepath = os.path.join('data', filename)
+    with open(filepath, mode='w', encoding='utf-8', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(['title', 'company', 'country', 'location', 'salary', 'source', 'link', 'date',
                          'company_field', 'description', 'skills', 'job_type'])
         writer.writerows(results)
-    logging.info(f"Data written to file {args['filename']}")
+    logging.info(f"Data written to file {filepath}")
 
 
 def parse_args() -> Dict[str, str]:
