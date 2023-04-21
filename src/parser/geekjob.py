@@ -32,13 +32,13 @@ def main():
                         default=datetime.strftime(datetime.now(), '%Y-%m-%d'),
                         type=str,
                         dest="parse_date")
-    parse_date = datetime.strptime(parser.parse_args().parse_date, '%Y-%m-%d')
 
     parser.add_argument("--filename",
-                        default=f"geekjob_{datetime.strftime(parse_date,'%Y-%m-%d-%H-%M')}.csv",
+                        default=f"geekjob_{datetime.strftime(datetime.now(),'%Y-%m-%d-%H-%M')}.csv",
                         type=str,
                         dest="filename")
 
+    parse_date = datetime.strptime(parser.parse_args().parse_date, '%Y-%m-%d')
     csv_file = parser.parse_args().filename
 
     #  Для поиска вакансий по дате получаем заданную дату в виде строки как на сайте
