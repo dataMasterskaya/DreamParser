@@ -1,4 +1,7 @@
 import logging
+import platform
+from selenium import webdriver
+# from pyvirtualdisplay import Display
 
 
 def setup_logging(logfile=None, loglevel="INFO"):
@@ -27,3 +30,23 @@ def setup_logging(logfile=None, loglevel="INFO"):
         fh.setLevel(loglevel)
         fh.setFormatter(formatter)
         logger.addHandler(fh)
+
+
+def set_driver():
+    if platform.system() == "Windows":
+        driver = webdriver.Chrome()
+    else:
+        display = Display(visible=0, size=(1920, 1200))
+        display.start()
+        options = webdriver.ChromeOptions()
+        options.add_argument('--no-sandbox')
+        options.add_argument('start-maximized')
+        options.add_argument('enable-automation')
+        options.add_argument('--disable-infobars')
+        options.add_argument('--disable-dev-shm-usage')
+        options.add_argument('--disable-browser-side-navigation')
+        options.add_argument("--remote-debugging-port=9222")
+        options.add_argument('--disable-gpu')
+        options.add_argument("--log-level=3")
+        driver = webdriver.Chrome(options=options)
+    return driver
