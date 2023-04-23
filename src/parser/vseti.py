@@ -136,7 +136,7 @@ def parse_args() -> Dict[str, str]:
     parser = argparse.ArgumentParser(description='Scrapes job postings from vseti.app')
     parser.add_argument('-f', '--filename', type=str, help='Name of output file', default=f'{date.today()}_vseti.csv')
     parser.add_argument('-d', '--days', type=int, help='Number of days to subtract from the current date',
-                        default=30)
+                        default=1)
     return vars(parser.parse_args())
 
 
