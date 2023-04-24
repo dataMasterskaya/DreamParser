@@ -167,5 +167,5 @@ def main(filename):
 if __name__ == "__main__":
     setup_logging("log.txt")
     args = parse_args()
-    main(args)
+    main(args["filename"])
 
