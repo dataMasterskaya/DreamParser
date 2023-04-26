@@ -1,7 +1,6 @@
 import logging
 import platform
 from selenium import webdriver
-# from pyvirtualdisplay import Display
 
 
 def setup_logging(logfile=None, loglevel="INFO"):
@@ -33,9 +32,11 @@ def setup_logging(logfile=None, loglevel="INFO"):
 
 
 def set_driver():
+    logging.info("Init driver")
     if platform.system() == "Windows":
         driver = webdriver.Chrome()
     else:
+        from pyvirtualdisplay import Display
         display = Display(visible=0, size=(1920, 1200))
         display.start()
         options = webdriver.ChromeOptions()
@@ -48,5 +49,5 @@ def set_driver():
         options.add_argument("--remote-debugging-port=9222")
         options.add_argument('--disable-gpu')
         options.add_argument("--log-level=3")
-        driver = webdriver.Chrome(options=options)
+        driver = webdriver.Chrome("./driver/chromedriver", options=options)
     return driver
