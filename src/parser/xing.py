@@ -9,7 +9,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 
 import undetected_chromedriver
-#from pyvirtualdisplay import Display
 
 from bs4 import BeautifulSoup
 
@@ -40,8 +39,8 @@ headers = {
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.106 Safari/537.36"
     }
 
-url = 'https://www.xing.com/jobs/search?careerLevel=1.795d28&careerLevel=2.24d1f6\
-       &careerLevel=3.2ebf16&keywords=junior%20data%20analyst%20scientist&sort=date'
+url = 'https://www.xing.com/jobs/search?\
+    careerLevel=1.795d28&careerLevel=2.24d1f6&careerLevel=3.2ebf16&keywords=junior%20data%20analyst%20scientist&sort=date'
 
 def get_jobs(url):
   driver = webdriver.Chrome(options=options)
