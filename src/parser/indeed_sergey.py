@@ -19,8 +19,8 @@ from webdriver_manager.chrome import ChromeDriverManager
 from pyvirtualdisplay import Display
 
 
-# !Функция, которая закрывает всплывающие окна
 def close_popup():
+    # !Функция, которая закрывает всплывающие окна
     try:
         driver.find_elements(
             By.XPATH, "//button[@class='icl-CloseButton icl-Modal-close']").click()
@@ -34,12 +34,8 @@ def close_popup():
         pass
 
 
-# !Функция, которая собирает список стран для парсера
-def all_available_countries(url_worldwide, retry=5):
-    # Список доступных стран, данные с сайта https://www.indeed.com/worldwide
-    list_available_countries = []
-    dict_country_code = {}
-
+def driver_initialization(retry=5):
+    # !Функция, инициализирующая driver
     try:
         display = Display(visible=0, size=(1920, 1200))
         display.start()
@@ -55,61 +51,95 @@ def all_available_countries(url_worldwide, retry=5):
         options.add_argument('--disable-gpu')
         options.add_argument("--log-level=3")
 
-        driver = webdriver.Chrome(options=options)
-        driver.get(url_worldwide)
-        time.sleep(3)
-        close_popup()
+        # Отключаем обнаружение автоматизации (3 строки ниже)
+        options.add_experimental_option(
+            "excludeSwitches", ["enable-automation"])
+        options.add_experimental_option('useAutomationExtension', False)
+        options.add_argument("—disable-blink-features=AutomationControlled")
 
+        driver = webdriver.Chrome(options=options)
+
+        # Скрипт, который удаляет методы помогающие определить автоматизированное ПО.
+        driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
+            'source': '''
+                delete window.cdc_adoQpoasnfa76pfcZLmcfl_Array;
+                delete window.cdc_adoQpoasnfa76pfcZLmcfl_Promise;
+                delete window.cdc_adoQpoasnfa76pfcZLmcfl_Symbol;
+          '''
+        })
+        # Так же помогает скрыть обнаружение автоматизации
+        stealth(driver,
+                languages=["en-US", "en"],
+                vendor="Google Inc.",
+                platform="Win32",
+                webgl_vendor="Intel Inc.",
+                renderer="Intel Iris OpenGL Engine",
+                fix_hairline=True,
+                )
+
+        return driver
+
+    except Exception as ex:
+        if retry:
+            print('Crash in "driver_initialization" function. Restart code automatically')
+            print(f'Attempts = {retry}')
+            time.sleep(3)
+            driver.close()
+            driver.quit()
+            return driver_initialization(retry=(retry - 1))
+        else:
+            raise
+
+
+def all_available_countries(url_worldwide, retry=5):
+    # !Функция, которая собирает список стран для парсера
+    # Список доступных стран, данные с сайта https://www.indeed.com/worldwide
+    list_available_countries = []
+    dict_country_code = {}
+    driver = driver_initialization()
+
+    driver.get(url_worldwide)
+    time.sleep(3)
+    close_popup()
+
+    try:
         offers_worldwide = (BeautifulSoup(driver.find_element(By.XPATH, "//div[@class='worldwide__main']")
                                                 .get_attribute('innerHTML'), "html.parser")
                             )
-
         # Проходим в цикле по блоку кода и добавляем страна - ключ, значение - код страны, а так же страну в список
         close_popup()
-        for i in tqdm(offers_worldwide.find_all('li')):
+        for a_country in tqdm(offers_worldwide.find_all('li')):
             close_popup()
-            key_country = i.find(
+            key_country = a_country.find(
                 'span', {'class': 'worldwide__name'}).get_text()
-            value_country_code = i.find(
+            value_country_code = a_country.find(
                 'a', {'class': 'worldwide__link'}).get('data-country-code')
             dict_country_code[key_country] = value_country_code
             list_available_countries.append(key_country)
 
-        # Находим длину словаря и умножаем на 2, т к код страны две буквы
-        sum_key = len(dict_country_code) * 2
-        sum_value = 0
-
-        # Проверяем длину кода для страны
-        for key, value in dict_country_code.items():
-            if len(value) == 2:
-                sum_value += 2
-
-            else:
-                logging.warning('Attention, country code not 2 letters.')
-                logging.warning(
-                    f'Perhaps the code does not work correctly for this country : {key} - {value}')
-
-        # Выводим сообщение в зависимости от длины кода страны, т.к. далее используется срез для ссылки
-        if sum_key == sum_value:
-            logging.info('Code for all countries 2 letters.')
-        else:
-            logging.warning(
-                'Attention !. It is possible that the code does not work correctly! Check all nodes with links!')
-
     except Exception as ex:
-        if retry:
-            logging.error(
-                'Crash in "all_available_countries" function. Restart code automatically')
-            logging.error(
-                'Check if the website address is correct ! Former link - "https://www.indeed.com/worldwide" ')
-            logging.error(f'Attempts = {retry}')
-            time.sleep(3)
-            driver.close()
-            driver.quit()
-            return all_available_countries(url_worldwide, retry=(retry - 1))
+        logging.error('Error when collecting country information')
+
+    # Находим длину словаря и умножаем на 2, т к код страны две буквы
+    sum_key = len(dict_country_code) * 2
+    sum_value = 0
+
+    # Проверяем длину кода для страны
+    for key, value in dict_country_code.items():
+        if len(value) == 2:
+            sum_value += 2
 
         else:
-            raise
+            logging.warning('Attention, country code not 2 letters.')
+            logging.warning(
+                f'Perhaps the code does not work correctly for this country : {key} - {value}')
+
+    # Выводим сообщение в зависимости от длины кода страны, т.к. далее используется срез для ссылки
+    if sum_key == sum_value:
+        logging.info('Code for all countries 2 letters.')
+    else:
+        logging.warning(
+            'Attention ! It is possible that the code does not work correctly! Check all nodes with links!')
 
     # Делаем список кода стран
     list_country_code = list(dict_country_code.values())
@@ -117,25 +147,17 @@ def all_available_countries(url_worldwide, retry=5):
     return list_available_countries, list_country_code
 
 
-# !Функция, которая создаёт готовую ссылку на страницу для сбора информации
 def get_url(country_abbreviated, position, retry=5):
+    # !Функция, которая создаёт готовую ссылку на страницу для сбора информации
     # Создаем URL позиции и локации
-    try:
-        template = 'https://{}.indeed.com/jobs?q={}&fromage=1'
-        position = position.replace(' ', '+')
-        url = template.format(country_abbreviated, position)
-        return url
-
-    except Exception as ex:
-        logging.error(
-            'Error in function "get_url". Restart code automatically')
-        logging.error(f'Attempts = {retry}')
-
-        return get_url(country_abbreviated, position, retry=(retry - 1))
+    template = 'https://{}.indeed.com/jobs?q={}&fromage=1'
+    position = position.replace(' ', '+')
+    url = template.format(country_abbreviated, position)
+    return url
 
 
-# !Функция, которая собирает информацию с карточек
 def collection_information(link):
+    # !Функция, которая собирает информацию с карточек
     # Получаем индекс буквы "m", в сокращении страны всегда 2-е буквы!
     index_end_m = link.find('.com/') + 4
 
@@ -148,47 +170,9 @@ def collection_information(link):
     href_vacancy = []
     job_description = []
 
-    display = Display(visible=0, size=(1920, 1200))
-    display.start()
-    options = webdriver.ChromeOptions()
-    options.add_argument('--no-sandbox')
-    options.add_argument('start-maximized')
-    options.add_argument('enable-automation')
-    options.add_argument('--disable-infobars')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--disable-browser-side-navigation')
-    options.add_argument("--remote-debugging-port=9222")
-    # options.add_argument("--headless")
-    options.add_argument('--disable-gpu')
-    options.add_argument("--log-level=3")
+    driver = driver_initialization()
 
-    # Отключаем обнаружение автоматизации (3 строки ниже)
-    options.add_experimental_option("excludeSwitches", ["enable-automation"])
-    options.add_experimental_option('useAutomationExtension', False)
-    options.add_argument("—disable-blink-features=AutomationControlled")
-
-    driver = webdriver.Chrome(options=options)
-
-    # Скрипт, который удаляет методы помогающие определить автоматизированное ПО.
-    driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
-        'source': '''
-            delete window.cdc_adoQpoasnfa76pfcZLmcfl_Array;
-            delete window.cdc_adoQpoasnfa76pfcZLmcfl_Promise;
-            delete window.cdc_adoQpoasnfa76pfcZLmcfl_Symbol;
-      '''
-    })
-
-    # Так же помогает скрыть обнаружение автоматизации
-    stealth(driver,
-            languages=["en-US", "en"],
-            vendor="Google Inc.",
-            platform="Win32",
-            webgl_vendor="Intel Inc.",
-            renderer="Intel Iris OpenGL Engine",
-            fix_hairline=True,
-            )
-
-    # Сделал дополнительно try-except т.к. есть битые ссылки
+    # Сделал try-except т.к. есть битые ссылки
     try:
         driver.get(link)
         logging.info(f'Start: {link}')
@@ -197,115 +181,104 @@ def collection_information(link):
         close_popup()
 
         while True:
-            try:
-                offers = (BeautifulSoup(driver.find_element(By.XPATH, "//div[@class='jobsearch-LeftPane']")
-                                              .get_attribute('innerHTML'), "html.parser")
-                          )
+            offers = (BeautifulSoup(driver.find_element(By.XPATH, "//div[@class='jobsearch-LeftPane']")
+                                    .get_attribute('innerHTML'), "html.parser")
+                      )
 
+            close_popup()
+            for name_href in offers.find_all('h2'):
                 close_popup()
-                for i in offers.find_all('h2'):
-                    close_popup()
-                    if i.find('span').get("title"):
-                        vacancy_name.append(i.find('span').get("title"))
-                    else:
-                        vacancy_name.append('None')
+                if name_href.find('span').get("title"):
+                    vacancy_name.append(
+                        name_href.find('span').get("title"))
+                else:
+                    vacancy_name.append('None')
 
-                    # Делаем готовую ссылку на вакансию
-                    close_popup()
-                    if i.find('a').get('href'):
-                        href_vacancy.append(
-                            link[:index_end_m] + i.find('a').get('href'))
-                    else:
-                        href_vacancy.append('None')
-
+                # Делаем готовую ссылку на вакансию
                 close_popup()
-                for i in offers.find_all('td', {'class': 'resultContent'}):
-                    close_popup()
-                    # Имя компании, если указана, то добавляем, если нет то - "не указано"
-                    if i.find_all('div', {'class': 'heading6 company_location tapItem-gutter companyInfo'}):
-                        company_name.append(
-                            i.find('span', {'class': 'companyName'}).get_text())
-                    else:
-                        company_name.append('None')
+                if name_href.find('a').get('href'):
+                    href_vacancy.append(
+                        link[:index_end_m] + name_href.find('a').get('href'))
+                else:
+                    href_vacancy.append('None')
 
-                    # Локация, если указана, то добавляем, если нет то - "не указано"
-                    close_popup()
-                    if i.find_all('div', {'class': 'heading6 company_location tapItem-gutter companyInfo'}):
-                        company_location.append(
-                            i.find('div', {'class': 'companyLocation'}).get_text())
-                    else:
-                        company_location.append('None')
-
+            close_popup()
+            for comp_name_locat in offers.find_all('td', {'class': 'resultContent'}):
                 close_popup()
-                for i in offers.find_all('td', {'class': 'resultContent'}):
-                    close_popup()
-                    # Зарплата, если указана, то добавляем, если нет то - "не указано"
-                    if i.find_all('div', {'class': 'metadata salary-snippet-container'}):
-                        salary.append(
-                            i.find('div', {'class': 'attribute_snippet'}).get_text())
-                    else:
-                        salary.append('None')
+                # Имя компании, если указана, то добавляем, если нет то - "не указано"
+                if comp_name_locat.find_all('div', {'class': 'heading6 company_location tapItem-gutter companyInfo'}):
+                    company_name.append(
+                        comp_name_locat.find('span', {'class': 'companyName'}).get_text())
+                else:
+                    company_name.append('None')
 
-                    # Добавляем занятость в список
-                    close_popup()
-                    if i.find_all('ul', {'class': 'attributes-list'}):
-                        employment.append(i.find('li').get_text())
-                    else:
-                        employment.append('None')
-
-                '''
-                Собираем полное описание вакансии
-                '''
-
+                # Локация, если указана, то добавляем, если нет то - "не указано"
                 close_popup()
-                blocks = driver.find_elements(
-                    By.XPATH, '//div[@class = "css-1m4cuuf e37uo190"]')
+                if comp_name_locat.find_all('div', {'class': 'heading6 company_location tapItem-gutter companyInfo'}):
+                    company_location.append(
+                        comp_name_locat.find('div', {'class': 'companyLocation'}).get_text())
+                else:
+                    company_location.append('None')
 
+            close_popup()
+            for salar_employm in offers.find_all('td', {'class': 'resultContent'}):
                 close_popup()
-                for text in tqdm(blocks):
-                    close_popup()
-                    # Делаем скрол вниз
-                    text.location_once_scrolled_into_view
-                    close_popup()
-                    # Нажимаем на название вакансии
-                    text.click()
-                    time.sleep(2)
-                    close_popup()
+                # Зарплата, если указана, то добавляем, если нет то - "не указано"
+                if salar_employm.find_all('div', {'class': 'metadata salary-snippet-container'}):
+                    salary.append(
+                        salar_employm.find('div', {'class': 'attribute_snippet'}).get_text())
+                else:
+                    salary.append('None')
 
-                    try:
-                        close_popup()
-                        job_description.append(driver.find_element(By.XPATH, '//div[@class = "jobsearch-jobDescriptionText jobsearch-JobComponent-description"]')
-                                               .text)
-                        close_popup()
+                # Добавляем занятость в список
+                close_popup()
+                if salar_employm.find_all('ul', {'class': 'attributes-list'}):
+                    employment.append(salar_employm.find('li').get_text())
+                else:
+                    employment.append('None')
 
-                    except:
-                        logging.error(
-                            'Block - "jobsearch-jobDescriptionText ..." not found, code execution continues ...')
-                        job_description.append('None')
-                        # continue
-                        break
+            '''
+            Собираем полное описание вакансии
+            '''
 
-                # Если есть кнопка "Следующая страница", то кликаем, иначе, завершаем цикл.
+            close_popup()
+            blocks = driver.find_elements(
+                By.XPATH, '//div[@class = "css-1m4cuuf e37uo190"]')
+
+            close_popup()
+            for text in tqdm(blocks):
+                close_popup()
+                # Делаем скрол вниз
+                text.location_once_scrolled_into_view
+                close_popup()
+                # Нажимаем на название вакансии
+                text.click()
+                time.sleep(2)
+                close_popup()
+
                 try:
                     close_popup()
-                    driver.find_element(
-                        By.XPATH, '//a[@data-testid="pagination-page-next"]').click()
-                    # link = link[:index_end_m] + offers.find('a', {'aria-label': 'Next Page'}).get('href')
-                    time.sleep(2)
+                    job_description.append(driver.find_element(By.XPATH, '//div[@class = "jobsearch-jobDescriptionText jobsearch-JobComponent-description"]')
+                                           .text)
+                    close_popup()
 
-                except Exception:
-                    logging.warning('Last page')
+                except:
+                    logging.error(
+                        'Block - "jobsearch-jobDescriptionText ..." not found, code execution continues ...')
+                    job_description.append('None')
+                    # continue
                     break
 
+            # Если есть кнопка "Следующая страница", то кликаем, иначе, завершаем цикл.
+            try:
+                close_popup()
+                driver.find_element(
+                    By.XPATH, '//a[@data-testid="pagination-page-next"]').click()
+                # link = link[:index_end_m] + offers.find('a', {'aria-label': 'Next Page'}).get('href')
+                time.sleep(2)
+
             except Exception:
-                vacancy_name.append('None')
-                company_name.append('None')
-                company_location.append('None')
-                salary.append('None')
-                employment.append('None')
-                href_vacancy.append('None')
-                job_description.append('None')
-                logging.warning('No vacancies')
+                logging.warning('Last page')
                 break
 
     except Exception:
@@ -318,15 +291,15 @@ def collection_information(link):
         job_description.append('None')
         logging.warning('No vacancies or invalid link')
 
-    # Добавляем все переменные в наш итоговый dataframe
+    # Объединяем наши переменные в список
     df = [vacancy_name, company_name, company_location,
           salary, employment, href_vacancy, job_description]
 
     return df
 
 
-# !Функция, которая собирает итоговый dataframe
 def creation_final_df(df):
+    # !Функция, которая собирает итоговый dataframe
     now = datetime.datetime.now()
 
     # Списки для сбора информации по типу собранной информации
