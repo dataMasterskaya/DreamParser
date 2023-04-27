@@ -86,7 +86,7 @@ def main(filename):
         if len(comp_loc) > 1:
             location = comp_loc[1].removesuffix(', USA')
         else:
-            location = '-'
+            location = ''
 
         working_conditions = el_search('//*[@id="searchDisplay-div"]/div[3]'
                                        f'/dhi-search-cards-widget/div/dhi-search-card[{i}]'
@@ -104,7 +104,7 @@ def main(filename):
                    'country': 'USA',
                    'location': location,
                    'date': dt_job(posted),
-                   'company_field': '-',
+                   'company_field': '',
                    'job_type': working_conditions,
                    'info_another': info_another})
     driver.close()
@@ -129,7 +129,7 @@ def main(filename):
 
             # зарплата указана не во всех вакансиях,
             # сначала проверяю наличие информации
-            salary = '-'
+            salary = ''
             salary_div = soup.find('div',
                                    class_='job-info order-4 col-span-2 mb-10 md:mb-0 '
                                           'sm:col-span-1 md:col-span-4 lg:col-span-5 lg:mb-0')
@@ -142,9 +142,9 @@ def main(filename):
                               find('p').
                               text)
         else:
-            skills = '-'
-            dscr = '-'
-            salary = '-'
+            skills = ''
+            dscr = ''
+            salary = ''
         data = {
             'salary': salary,
             'source': 'dice.com',
@@ -157,7 +157,7 @@ def main(filename):
     # для вакансий, где ссылка вела на другой сайт, вставляем обрезанное описание со страницы поиска, объединяем данные
     for i in range(cnt):
         df[i] = job_data[i] | df[i]
-        if df[i]['description'] == '-':
+        if df[i]['description'] == '':
             df[i]['description'] = df[i]['info_another']
         del df[i]['info_another']
     write_to_csv(df, filename)
