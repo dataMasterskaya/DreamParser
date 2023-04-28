@@ -206,7 +206,7 @@ def main():
                         company_field = driver.find_elements(By.XPATH,
                                                              tags_dict.get('company_field'))
                         company_field = ', '.join(el.text for el in company_field)
-                        company_field = company_field.rstrip(level)
+                        company_field = company_field.rstrip(level).rstrip(', ')
                     except Exception as ex:
                         company_field = None
                         logging.error(f"Ошибка при парсинге company_field: {ex}")
