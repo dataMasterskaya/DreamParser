@@ -1,0 +1,28 @@
+{
+    "United States":"https://www.glassdoor.com/Job/data-scientist-or-data-analyst-jobs-SRCH_KO0,30.htm?fromAge=1&seniorityType=entrylevel",
+            "United Kingdom":
+            "https://www.glassdoor.co.uk/Job/data-scientist-or-data-analyst-jobs-SRCH_KO0,30.htm?fromAge=1&seniorityType=entrylevel",
+            "Italy":
+            "https://www.glassdoor.it/Lavoro/data-scientist-or-data-analyst-lavori-SRCH_KO0,30.htm?fromAge=1&seniorityType=entrylevel",
+            "Ireland":
+            "https://www.glassdoor.ie/Job/data-scientist-or-data-analyst-jobs-SRCH_KO0,30.htm?fromAge=1&seniorityType=entrylevel",
+            "Austria":
+            "https://www.glassdoor.at/Job/data-scientist-or-data-analyst-jobs-SRCH_KO0,30.htm?fromAge=1&seniorityType=entrylevel",
+            "Mexico":
+            "https://www.glassdoor.com.mx/Empleo/data-scientist-or-data-analyst-empleos-SRCH_KO0,30.htm?fromAge=1&seniorityType=entrylevel",
+            "France":
+            "https://www.glassdoor.fr/Emploi/data-scientist-or-data-analyst-emplois-SRCH_KO0,30.htm?fromAge=1&seniorityType=entrylevel",
+            "Argentina":
+            "https://www.glassdoor.com.ar/Empleo/data-scientist-or-data-analyst-empleos-SRCH_KO0,30.htm?fromAge=1&seniorityType=entrylevel",
+            "Belgium":
+            "https://nl.glassdoor.be/Vacature/data-scientist-or-data-analyst-vacatures-SRCH_KO0,30.htm?fromAge=1&seniorityType=entrylevel",
+            "India":"https://www.glassdoor.co.in/Job/data-scientist-or-data-analyst-jobs-SRCH_KO0,30.htm?fromAge=1&seniorityType=entrylevel",
+            "Brazil": "https://www.glassdoor.com.br/Vaga/data-scientist-or-data-analyst-vagas-SRCH_KO0,30.htm?fromAge=1&seniorityType=entrylevel",
+            "Netherlands":"https://www.glassdoor.nl/Vacature/data-scientist-or-data-analyst-vacatures-SRCH_KO0,30.htm?fromAge=1&seniorityType=entrylevel",
+            "Australia": "https://www.glassdoor.com.au/Job/data-scientist-or-data-analyst-jobs-SRCH_KO0,30.htm?fromAge=1&seniorityType=entrylevel",
+            "Germany": "https://www.glassdoor.de/Job/data-scientist-or-data-analyst-jobs-SRCH_KO0,30.htm?fromAge=1&seniorityType=entrylevel",
+            "New Zealand":"https://www.glassdoor.co.nz/Job/data-scientist-or-data-analyst-jobs-SRCH_KO0,30.htm?fromAge=1&seniorityType=entrylevel",
+            "Canada": "https://www.glassdoor.ca/Job/data-scientist-or-data-analyst-jobs-SRCH_KO0,30.htm?fromAge=1&seniorityType=entrylevel",
+            "Spain":"https://www.glassdoor.es/Empleo/data-scientist-or-data-analyst-empleos-SRCH_KO0,30.htm?fromAge=1&seniorityType=entrylevel",
+            "Switzerland":"https://de.glassdoor.ch/Job/data-scientist-or-data-analyst-jobs-SRCH_KO0,30.htm?fromAge=1&seniorityType=entrylevel"
+}
