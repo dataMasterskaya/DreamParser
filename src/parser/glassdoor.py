@@ -10,12 +10,12 @@ from time import sleep
 from pyvirtualdisplay import Display
 import logging
 import json
-#import utils
+from utils import setup_logging
 
-# display = Display(visible=0, size=(1920, 1200))  
-# display.start()
+display = Display(visible=0, size=(1920, 1200))  
+display.start()
 options = webdriver.ChromeOptions()
-options.add_argument("--window-size=1920,1200")
+#options.add_argument("--window-size=1920,1200")
 options.add_argument('--no-sandbox')
 options.add_argument('start-maximized')
 options.add_argument('enable-automation')
@@ -88,11 +88,10 @@ dataname = (datetime.now()).date()
 #         }
 
 
-from pprint import pprint
+setup_logging()
 with open("DreamParser-parser_glassdoor/src/parser/urls.json","r", encoding="utf-8") as json_data:
 # with open(r"DreamParser-parser_glassdoor\src\parser\urls.json","r", encoding="utf-8") as json_data:
     urls = json.load(json_data)
-pprint(urls)
 alllinks={}# id, link c левой стороны
 
 def scan(cont,alllink):
