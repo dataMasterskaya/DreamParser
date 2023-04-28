@@ -9,6 +9,10 @@ import csv
 from pyvirtualdisplay import Display
 from datetime import datetime
 import logging
+from utils import setup_logging
+
+
+setup_logging()
 
 display = Display(visible=0, size=(1920, 1200))  
 display.start()
@@ -34,7 +38,7 @@ def scan(url):
         response = requests.get(url,headers=headers)
     except:
         logging.info(url,"response ERROR")
-        exit
+        exit(0)
         
     sleep(1)                  # when time decreases, more links give no information
     soup = BeautifulSoup(response.text,"lxml")
@@ -44,7 +48,7 @@ def scan(url):
         company = " ".join(soup.find("a",
             class_="topcard__org-name-link topcard__flavor--black-link").text.split())
     except:
-        company = None
+        company = ''
 
         # title    
     try:
@@ -52,7 +56,7 @@ def scan(url):
         class_=("top-card-layout__title font-sans text-lg papabear:text-xl"
             " font-bold leading-open text-color-text mb-0 topcard__title")).text
     except:
-        title = None
+        title = ''
 
     try:
         xxx = soup.find_all("ul",class_="description__job-criteria-list")
@@ -61,31 +65,31 @@ def scan(url):
                 
     except:
         sleep(0.5)
- # Тут я начинаю сплитить с обратной стороны и проверять на наличие информации
- # иногда некоторые не пишут
- # может не самый лучшый вариант но единственный рабочый что я нашел))       
-        # field of company
+""" # Тут я начинаю сплитить с обратной стороны и проверять на наличие информации
+  иногда некоторые не пишут
+  может не самый лучшый вариант но единственный рабочый что я нашел))       
+        field of company"""
     try:
         ind = " ".join(y.split('Industries')[1].split())
         y = y.split('Industries')[0]
     except:
-        ind = None
+        ind = ''
         # employment type
     try:
         emp = " ".join(y.split('Employment type')[1].split())
         y = y.split('Employment type')[0]
     except:
-        emp = None
+        emp = ''
         # seniority level
     try:
         level = " ".join(y.split('Seniority level')[1].split())
     except:
-        level= None
+        level= ''
         # location
     try:
         loc = " ".join(soup.find("span",class_="topcard__flavor topcard__flavor--bullet").text.split())
     except:
-        loc = None      
+        loc = ''      
         # publication time
     time = dataname
         # link
@@ -95,15 +99,15 @@ def scan(url):
         card_text = " ".join(soup.find("div",
                 class_="show-more-less-html__markup show-more-less-html__markup--clamp-after-5").text.split())
     except:
-        card_text = None
+        card_text = ''
         # country
     try:
         country = loc.split(',')[-1]
     except:
-        country = None
+        country = ''
 
     source = "linkedin.com"
-    sol = None
+    sol = ''
             
     return ([title, company, country, loc, sol, 
                 source, link, time, ind, card_text,level,emp])
@@ -140,9 +144,9 @@ def main():
     for l in links2:
         links.append(l.get("href")+"&_l=en_US") # translate into english
 
-    # function for getting information from the link to the offer by sending a request,
-    # converting the response into a soup object and processing it with bs methods
-    # # scanning all links
+"""    function for getting information from the link to the offer by sending a request,
+    converting the response into a soup object and processing it with bs methods
+    scanning all links"""
     driver.quit()
 
     data = []
