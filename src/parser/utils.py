@@ -1,6 +1,10 @@
 import logging
 import platform
 from selenium import webdriver
+from typing import List, Tuple
+from datetime import date
+import os
+import csv
 
 
 def setup_logging(logfile=None, loglevel="INFO"):
@@ -31,7 +35,11 @@ def setup_logging(logfile=None, loglevel="INFO"):
         logger.addHandler(fh)
 
 
-def set_driver():
+def get_driver() -> webdriver.Chrome:
+    """
+    Init Chromium drive
+    :return:
+    """
     logging.info("Init driver")
     if platform.system() == "Windows":
         driver = webdriver.Chrome()
@@ -51,3 +59,26 @@ def set_driver():
         options.add_argument("--log-level=3")
         driver = webdriver.Chrome("./driver/chromedriver", options=options)
     return driver
+
+
+def write_to_csv(results: List[Tuple[str, str, str, str, str, str, str, date, str, str, str, str]], filename: str):
+    """
+    Writes information to a file
+    :param results: list of lists with vacancies information
+    :param filename: name of output file
+    """
+    if not results:
+        logging.error(f'No results for the choosen period')
+        return None
+
+    filepath = os.path.join(os.path.dirname(__file__), 'data', filename)
+
+    with open(filepath, mode='w', encoding='utf-8', newline='') as file:
+        writer = csv.writer(file)
+        try:
+            writer.writerow(['title', 'company', 'country', 'location', 'salary', 'source', 'link', 'date',
+                             'company_field', 'description', 'skills', 'job_type'])
+            writer.writerows(results)
+        except Exception as err:
+            logging.error(repr(err))
+    logging.info(f"Data written to file {filepath}")
