@@ -81,4 +81,5 @@ def write_to_csv(results: List[Tuple[str, str, str, str, str, str, str, date, st
             writer.writerows(results)
         except Exception as err:
             logging.error(repr(err))
-    logging.info(f"Data written to file {filepath}")
+        else:
+            logging.info(f"Data written to file {filepath}")
