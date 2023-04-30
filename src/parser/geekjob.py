@@ -39,19 +39,24 @@ def init_driver():
     return webdriver.Chrome(options=options)
 
 
-def main():
+def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--parse_date",
                         default=datetime.strftime(datetime.now(), '%Y-%m-%d'),
                         type=str,
                         dest="parse_date")
     parser.add_argument("--filename",
-                        default=f"geekjob_{datetime.strftime(datetime.now(),'%Y-%m-%d-%H-%M')}.csv",
+                        default="",
                         type=str,
                         dest="filename")
+    return vars(parser.parse_args())
 
-    parse_date = datetime.strptime(parser.parse_args().parse_date, '%Y-%m-%d')
-    csv_file = parser.parse_args().filename
+
+def main(date, file_name:str=""):
+
+    parse_date = datetime.strptime(date, '%Y-%m-%d')
+    if file_name == "":
+        file_name = f"geekjob_{datetime.strftime(datetime.now(), '%Y-%m-%d-%H-%M')}.csv"
 
     #  Для поиска вакансий по дате получаем заданную дату в виде строки как на сайте
     current_date = rename_date(datetime.strftime(parse_date, '%d %m'))
@@ -230,7 +235,6 @@ def main():
                                 company_field, description, skills, job_type])
 
                     find_list.append(link)
-                    logging.info(f"Данные по вакансии успешно записаны в csv-файл (индекс {vacancy_index})")
                     vacancy_index += 1
 
                     logging.info(len(rows))
@@ -245,8 +249,8 @@ def main():
 
     driver.quit()
 
-    write_to_csv(rows, csv_file)
-    logging.info(f'Парсинг закончен, результат помещен в файл {csv_file}')
+    write_to_csv(rows, file_name)
+    logging.info("Парсинг закончен")
 
 
 if __name__ == "__main__":

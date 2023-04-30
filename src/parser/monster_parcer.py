@@ -202,17 +202,19 @@ def scrap_links(match_dads, match_junior, list_url_vacancy, set_driver):
 
 def parse_args() -> Dict[str, str]:
     parser = argparse.ArgumentParser(description='Scrapes job postings from monster.com')
-    parser.add_argument('-f', '--filename', type=str, help='Name of output file', default=f'{date.today()}_monster.csv')
+    parser.add_argument('-f', '--filename', type=str, help='Name of output file', default="")
     return vars(parser.parse_args())
 
 
-def main(args):
+def main(filename: str = ""):
     url_vacancy = country_url('url_dict_today.json', True)
     data = scrap_links(test_dads, test_junior, url_vacancy, False)
-    write_to_csv(data, args['filename'])
+    if filename == "":
+        filename = f'monster_{date.today()}.csv';
+    write_to_csv(data, filename)
 
 
 if __name__ == "__main__":
     setup_logging("log.txt")
     args = parse_args()
-    main(args)
+    main(args["filename"])
