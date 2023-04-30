@@ -200,19 +200,6 @@ def scrap_links(match_dads, match_junior, list_url_vacancy, set_driver):
     return data
 
 
-def write_to_csv(results: List[Tuple[str, str, str, str, str, str, str, date, str, str, str, str]], filename: str):
-    """writes information to a file"""
-    if not results:
-        logging.error(f'No results for the choosen period')
-    filepath = os.path.join('data', filename)
-    with open(filepath, mode='w', encoding='utf-8', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow(['title', 'company', 'country', 'location', 'salary', 'source', 'link', 'date',
-                         'company_field', 'description', 'skills', 'job_type'])
-        writer.writerows(results)
-    logging.info(f"Data written to file {filepath}")
-
-
 def parse_args() -> Dict[str, str]:
     parser = argparse.ArgumentParser(description='Scrapes job postings from monster.com')
     parser.add_argument('-f', '--filename', type=str, help='Name of output file', default=f'{date.today()}_monster.csv')
