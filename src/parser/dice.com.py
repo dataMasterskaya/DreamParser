@@ -84,7 +84,7 @@ def main(filename):
         company = comp_loc[0]
 
         if len(comp_loc) > 1:
-            location = comp_loc[1].removesuffix(', USA')
+            location = comp_loc[1].split(',')[0]
         else:
             location = ''
 
