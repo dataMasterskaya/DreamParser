@@ -5,6 +5,16 @@ from typing import List, Tuple
 from datetime import date
 import os
 import csv
+from pythonjsonlogger import jsonlogger
+
+_logger = logging.getLogger(__name__)
+
+
+class YcLoggingFormatter(jsonlogger.JsonFormatter):
+    def add_fields(self, log_record, record, message_dict):
+        super(YcLoggingFormatter, self).add_fields(log_record, record, message_dict)
+        log_record['logger'] = record.name
+        log_record['level'] = str.replace(str.replace(record.levelname, "WARNING", "WARN"), "CRITICAL", "FATAL")
 
 
 def setup_logging(logfile=None, loglevel="INFO"):
@@ -24,8 +34,11 @@ def setup_logging(logfile=None, loglevel="INFO"):
     formatter = logging.Formatter(fmt)
 
     ch = logging.StreamHandler()
+    if os.environ["JSONLOG"]:
+        ch.setFormatter(YcLoggingFormatter('%(message)s %(level)s %(logger)s'))
+    else:
+        ch.setFormatter(formatter)
     ch.setLevel(loglevel)
-    ch.setFormatter(formatter)
     logger.addHandler(ch)
 
     if logfile is not None:
@@ -57,7 +70,10 @@ def get_driver() -> webdriver.Chrome:
         options.add_argument("--remote-debugging-port=9222")
         options.add_argument('--disable-gpu')
         options.add_argument("--log-level=3")
-        driver = webdriver.Chrome("./driver/chromedriver", options=options)
+        if os.environ['PORT']:
+            driver = webdriver.Chrome("./driver/chromedriver", options=options, port=os.environ["PORT"])
+        else:
+            driver = webdriver.Chrome("./driver/chromedriver", options=options)
     return driver
 
 
@@ -80,6 +96,6 @@ def write_to_csv(results: List[Tuple[str, str, str, str, str, str, str, date, st
                              'company_field', 'description', 'skills', 'job_type'])
             writer.writerows(results)
         except Exception as err:
-            logging.error(repr(err))
+            _logger.error(repr(err))
         else:
-            logging.info(f"Data written to file {filepath}")
+            _logger.info(f"Data written to file {filepath}")

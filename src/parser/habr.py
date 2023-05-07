@@ -32,6 +32,7 @@ def scan(url, dt):
 
 
 def main():
+    logging.info("Parse Habr")
     dataname = (datetime.now()).date()
     day = dataname.day  # нужно что бы парсить только за вчерашние вакансии
 
