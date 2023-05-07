@@ -1,8 +1,6 @@
 import requests
-# from pyvirtualdisplay import Display
 import re
 import argparse
-import csv
 import logging
 from datetime import date, timedelta, datetime
 from time import sleep
@@ -11,9 +9,7 @@ from bs4 import BeautifulSoup
 from selenium.common.exceptions import WebDriverException
 from selenium.common.exceptions import NoSuchElementException
 from typing import Tuple, List, Dict, Union
-from utils import setup_logging
-from utils import set_driver
-import os
+from utils import setup_logging, get_driver, write_to_csv
 
 headers = {
     "Accept": "application/json, text/javascript, */*; q=0.01",
@@ -73,7 +69,8 @@ def scrape_job_cards(url: str, days_ago: str) -> List[Tuple[str, str, str, str, 
     which cannot be set in filters with selenium or directly in the url"""
     period = date.today() - timedelta(days=int(days_ago))
     try:
-        driver = set_driver()
+        driver = get_driver()
+        logging.info("Get address %s", url)
         driver.get(url)
         driver.maximize_window()
         sleep(60)
@@ -111,37 +108,29 @@ def scrape_job_cards(url: str, days_ago: str) -> List[Tuple[str, str, str, str, 
         return results
     except NoSuchElementException as e:
         logging.error(f'Job cards changed their tags: {e}')
-        exit(1)
+        return []
     except WebDriverException as e:
-        logging.error(f'Error connecting with site: {e}')
-        exit(1)
-
-
-def write_to_csv(results: List[Tuple[str, str, str, str, str, str, str, date, str, str, str, str]], filename: str):
-    """writes information to a file"""
-    if not results:
-        logging.error(f'No results for the choosen period')
-    filepath = os.path.join('data', filename)
-    with open(filepath, mode='w', encoding='utf-8', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow(['title', 'company', 'country', 'location', 'salary', 'source', 'link', 'date',
-                         'company_field', 'description', 'skills', 'job_type'])
-        writer.writerows(results)
-    logging.info(f"Data written to file {filepath}")
+        logging.error('WebDriver Exception: %s', repr(e))
+        return []
 
 
 def parse_args() -> Dict[str, str]:
     """receives input arguments - the name of the file to be written
      and the number of days for which vacancies should be viewed"""
     parser = argparse.ArgumentParser(description='Scrapes job postings from vseti.app')
-    parser.add_argument('-f', '--filename', type=str, help='Name of output file', default=f'{date.today()}_vseti.csv')
+    parser.add_argument('-f', '--filename', type=str, help='Name of output file', default="")
     parser.add_argument('-d', '--days', type=int, help='Number of days to subtract from the current date',
                         default=1)
     return vars(parser.parse_args())
 
 
-def main(filename, days):
-    """it is final countdown"""
+def main(filename: str = "", days: int = 1):
+    """
+    it is final countdown
+    """
+    logging.info("Parse vseti")
+    if filename == "":
+        filename = f'vseti_{date.today()}.csv'
     results = scrape_job_cards(url_site, days)
     write_to_csv(results, filename)
 

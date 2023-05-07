@@ -1,8 +1,10 @@
+import selenium.common.exceptions
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver import Keys
+from selenium.common.exceptions import WebDriverException
 from bs4 import BeautifulSoup
 
 import time
@@ -10,7 +12,7 @@ from datetime import datetime, timedelta
 import csv
 import logging
 import argparse
-from utils import setup_logging
+from utils import setup_logging, write_to_csv, get_driver
 
 
 def rename_date(date):
@@ -37,22 +39,24 @@ def init_driver():
     return webdriver.Chrome(options=options)
 
 
-def main():
-
+def parse_args():
     parser = argparse.ArgumentParser()
-
     parser.add_argument("--parse_date",
                         default=datetime.strftime(datetime.now(), '%Y-%m-%d'),
                         type=str,
                         dest="parse_date")
-
     parser.add_argument("--filename",
-                        default=f"geekjob_{datetime.strftime(datetime.now(),'%Y-%m-%d-%H-%M')}.csv",
+                        default="",
                         type=str,
                         dest="filename")
+    return vars(parser.parse_args())
 
-    parse_date = datetime.strptime(parser.parse_args().parse_date, '%Y-%m-%d')
-    csv_file = parser.parse_args().filename
+
+def main(date, file_name:str=""):
+
+    parse_date = datetime.strptime(date, '%Y-%m-%d')
+    if file_name == "":
+        file_name = f"geekjob_{datetime.strftime(datetime.now(), '%Y-%m-%d-%H-%M')}.csv"
 
     #  Для поиска вакансий по дате получаем заданную дату в виде строки как на сайте
     current_date = rename_date(datetime.strftime(parse_date, '%d %m'))
@@ -91,11 +95,11 @@ def main():
                  'jobformat': '//span[@class="jobformat"]',
                  'company_field': '//b[contains(text(), "Отрасль и сфера применения")]/following-sibling::a'}
 
-    driver = init_driver()
+    driver = get_driver()
     driver.get(URL)
     driver.maximize_window()
 
-    #  Список строк длая записи в csv-файл
+    #  Список строк для записи в csv-файл
     rows = []
 
     #  Список для контроля уникальности обработанных вакансий
@@ -116,16 +120,22 @@ def main():
         vacancies_num = driver.find_element(By.XPATH, tags_dict.get('vacancies_num')).text
 
         if vacancies_num == '':
+            logging.warning("No vacancies found")
             continue
 
-        logging.info(f"{vacancies_num}, парсим из них только вакансии нужного уровня с отбором по дате:")
+        logging.info(f"{vacancies_num}, парсим из них только вакансии нужного уровня с отбором по дате.")
         main_window = driver.window_handles[0]
         items = driver.find_elements(By.XPATH, tags_dict.get('items'))
         dates = driver.find_elements(By.XPATH, tags_dict.get('dates'))
         vacancy_hrefs = driver.find_elements(By.XPATH, tags_dict.get('vacancy_hrefs'))
 
         for data, vacancy_href, item in zip(dates, vacancy_hrefs, items):
-            link = vacancy_href.get_attribute('href')
+            try:
+                link = vacancy_href.get_attribute('href')
+            except WebDriverException as err:
+                logging.error(repr(err))
+                continue
+
             if data.text in date_dict and link not in find_list:
                 date = data.text
                 time.sleep(3)
@@ -139,8 +149,9 @@ def main():
                     element_present = EC.presence_of_element_located((By.XPATH,
                                                                       tags_dict.get('element_present')))
                     WebDriverWait(driver, 5).until(element_present)
-                except Exception:
-                    logging.error(f"Ошибка при загрузке страницы вакансии {link}")
+                except Exception as err:
+                    logging.error(f"Ошибка при загрузке страницы вакансии {link}", repr(err))
+                    continue
 
                 #  Парсим уровень специальности
                 try:
@@ -224,28 +235,22 @@ def main():
                                 company_field, description, skills, job_type])
 
                     find_list.append(link)
-                    logging.info(f"Данные по вакансии успешно записаны в csv-файл (индекс {vacancy_index})")
                     vacancy_index += 1
+
+                    logging.info(len(rows))
 
                 driver.close()
                 driver.switch_to.window(main_window)
 
-                vacancy_href.send_keys(Keys.DOWN)
+                try:
+                    vacancy_href.send_keys(Keys.DOWN)
+                except selenium.common.exceptions.WebDriverException as err:
+                    logging.error(repr(err))
 
     driver.quit()
 
-    with open(csv_file, 'w', encoding='utf-8-sig', newline='') as file:
-        writer = csv.writer(file, delimiter=';')
-
-        #  Записываем заголовки таблицы в файл
-        writer.writerow(['title', 'company', 'country', 'location', 'salary',
-                     'source', 'link', 'date', 'company_field', 'description',
-                     'skills', 'job_type'])
-
-        for row in rows:
-            writer.writerow(row)
-
-    logging.info(f'Парсинг закончен, результат помещен в файл {csv_file}')
+    write_to_csv(rows, file_name)
+    logging.info("Парсинг закончен")
 
 
 if __name__ == "__main__":

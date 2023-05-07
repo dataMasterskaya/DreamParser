@@ -11,13 +11,13 @@ from selenium.webdriver.chrome.options import Options
 import csv
 import os
 from selenium.webdriver.common.keys import Keys
-import random
 from fake_useragent import UserAgent
 from datetime import date
 import logging
-from utils import setup_logging
 import warnings
 import json
+from utils import setup_logging, write_to_csv, get_driver
+
 
 warnings.filterwarnings('ignore')
 
@@ -75,7 +75,7 @@ def country_url(json_url, set_driver):
     url_vacancy = []
     with open(json_url, 'r') as file:
         dictionary_url = json.load(file)
-    driver = web_driver_set(set_driver)
+    driver = get_driver() # web_driver_set(set_driver)
     try:
         for key, value in dictionary_url.items():
             c_url = [value[0]]
@@ -111,7 +111,7 @@ def scrap_links(match_dads, match_junior, list_url_vacancy, set_driver):
     data = []
     cnt_vaсancy = 0
     cnt_fail = 0
-    driver = web_driver_set(set_driver)
+    driver = get_driver()# web_driver_set(set_driver)
     for item in list_url_vacancy:
         if cnt_vaсancy % 10 == 0:
             logging.info(f"Viewed {cnt_vaсancy} vacancies")
@@ -200,30 +200,21 @@ def scrap_links(match_dads, match_junior, list_url_vacancy, set_driver):
     return data
 
 
-def write_to_csv(results: List[Tuple[str, str, str, str, str, str, str, date, str, str, str, str]], filename: str):
-    """writes information to a file"""
-    if not results:
-        logging.error(f'No results for the choosen period')
-    filepath = os.path.join('data', filename)
-    with open(filepath, mode='w', encoding='utf-8', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow(['title', 'company', 'country', 'location', 'salary', 'source', 'link', 'date',
-                         'company_field', 'description', 'skills', 'job_type'])
-        writer.writerows(results)
-    logging.info(f"Data written to file {filepath}")
-
 def parse_args() -> Dict[str, str]:
     parser = argparse.ArgumentParser(description='Scrapes job postings from monster.com')
-    parser.add_argument('-f', '--filename', type=str, help='Name of output file', default=f'{date.today()}_monster.csv')
+    parser.add_argument('-f', '--filename', type=str, help='Name of output file', default="")
     return vars(parser.parse_args())
 
-def main(args):
+
+def main(filename: str = ""):
     url_vacancy = country_url('url_dict_today.json', True)
     data = scrap_links(test_dads, test_junior, url_vacancy, False)
-    write_to_csv(data, args['filename'])
+    if filename == "":
+        filename = f'monster_{date.today()}.csv';
+    write_to_csv(data, filename)
 
 
 if __name__ == "__main__":
     setup_logging("log.txt")
     args = parse_args()
-    main(args)
+    main(args["filename"])

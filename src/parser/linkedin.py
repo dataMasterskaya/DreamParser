@@ -65,10 +65,9 @@ def scan(url):
                 
     except:
         sleep(0.5)
-""" # Тут я начинаю сплитить с обратной стороны и проверять на наличие информации
-  иногда некоторые не пишут
-  может не самый лучшый вариант но единственный рабочый что я нашел))       
-        field of company"""
+    """ # Тут я начинаю сплитить с обратной стороны и проверять на наличие информации. Иногда некоторые не пишут.
+       Может не самый лучшый вариант но единственный рабочый что я нашел))       
+            field of company"""
     try:
         ind = " ".join(y.split('Industries')[1].split())
         y = y.split('Industries')[0]
@@ -144,9 +143,9 @@ def main():
     for l in links2:
         links.append(l.get("href")+"&_l=en_US") # translate into english
 
-"""    function for getting information from the link to the offer by sending a request,
-    converting the response into a soup object and processing it with bs methods
-    scanning all links"""
+    """    function for getting information from the link to the offer by sending a request,
+        converting the response into a soup object and processing it with bs methods
+        scanning all links"""
     driver.quit()
 
     data = []
