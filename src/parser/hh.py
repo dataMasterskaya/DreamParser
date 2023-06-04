@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 from utils import setup_logging, write_to_csv
 import json
 import logging
+from typing import List
 
 job_offer_title =  f'SQL NAME:("Аналитик" or "Analyst" or "Data Scientist" or "Дата саентист" or "ML")'
 experiences = ['noExperience', 'between1And3']
@@ -14,7 +15,7 @@ experiences = ['noExperience', 'between1And3']
 _logger = logging.getLogger(__name__)
 
 
-def get_url(job_offer_title, experiences, days_ago):
+def get_url(job_offer_title: str, experiences: List, days_ago: int):
     """
     Здесь мы собираем ссылки на все вакансии в зависимости от опыта на выходе получаем список ссылок
 
@@ -72,26 +73,43 @@ def get_info(urls):
             list_offers.append(item['employer']['name'])
             list_offers.append('Russia')
             list_offers.append(item['area']['name'])
-            list_offers.append(item['area']['name'])
             try:
-                list_offers.append(item['salary']['to'] + ' ' + item['salary']['from'] + ' '+ item['salary']['currency'])
+                if item["salary"]["from"] is None:
+                    s = "?"
+                else:
+                    s = item["salary"]["from"]
+                s = s + " - "
+                if item["salary"]["to"] is None:
+                    s = s + "?"
+                else:
+                    s = s + item["salary"]["to"]
+                if item["salary"]["currency"] is not None:
+                    s = s + item["salary"]["currency"]
+                list_offers.append(s)
             except Exception as err:
                 list_offers.append('')
                 _logger.warning(repr(err))
 
             list_offers.append('hh.ru')
             list_offers.append(item['alternate_url'])
-            try:
-                list_offers.append(BeautifulSoup(json.loads(requests.get(item['url']).text)['description'], "html.parser").get_text())
-            except Exception as err:
-                list_offers.append('')
-                _logger.warning(repr(err))
-
+            #date
+            list_offers.append(None)
+            #company field
             try:
                 list_offers.append(item['department']['name'])
             except Exception as err:
                 list_offers.append('')
                 _logger.warning(repr(err))
+
+            # description
+            try:
+                list_offers.append(BeautifulSoup(json.loads(requests.get(item['url']).text)['description'], "html.parser").get_text())
+            except Exception as err:
+                _logger.warning("Parse html page error %r", err)
+                list_offers.append('')
+
+             # skils
+            list_offers.append("")
 
             list_offers.append(item['employment']['name'])
             results.append(list_offers)
