@@ -68,43 +68,71 @@ def jobtype(row):
     elif 'contract' in row.lower():
         return 'Contract'
     else:
-        return None
+        return ''
 
+def location_сell(row, country):
+    if row != '':
+        if 'remote' in row.lower():
+            return country
+        else:
+            city = row.split(',')[0]
+            return city
+    else:
+        return ''
 
 def country_url(json_url, set_driver):
     url_vacancy = []
     with open(json_url, 'r') as file:
         dictionary_url = json.load(file)
-    driver = get_driver() # web_driver_set(set_driver)
-    try:
-        for key, value in dictionary_url.items():
-            c_url = [value[0]]
-            for c in c_url:
-                driver.get(c)
-                time.sleep(3)
-                counter = 0
-                while True:
-                    win = driver.find_element(By.TAG_NAME, 'html')
-                    win.send_keys(Keys.END)
-                    time.sleep(2)
-                    counter += 1
-                    if f"<span>{value[1]}</span>" in driver.page_source or counter > 30:
-                        break
-                time.sleep(5)
+    driver = web_driver_set(set_driver)
+    for key,value in dictionary_url.items():
+        c_url = [value[0]]
+        for c in c_url:
+            driver.get(c)
+            time.sleep(3)
+            counter = 0
+            fail_links = 0
+            while True:
+                win = driver.find_element(By.TAG_NAME, 'html')
+                win.send_keys(Keys.END)
+                time.sleep(10)
                 links = driver.find_elements(
                     By.CSS_SELECTOR,
-                    "a.job-cardstyle__JobCardComponent-sc-1mbmxes-0"
+                    "article.job-card-newstyle__JobCardComponentNew-sc-xm76f6-0"
                 )
-                for l in links:
-                    url_vacancy.append(l.get_attribute("href") + ' ' + key)
-            logging.info(f"End country {key}. Total vacancy {len(url_vacancy)}")
-    except Exception as ex:
-        logging.info(f"Something wrong in scrap country {key} : {ex}")
-    finally:
-        driver.close()
-        driver.quit()
-    return url_vacancy
-
+                for link in links:
+                    try:
+                        url_vacancy.append(
+                        link
+                        .find_element(By.TAG_NAME,'a')
+                        .get_attribute("href") + ' ' + key
+                        )
+                    except:
+                        fail_links += 1
+                        logging.info(f'Can not find url. ERORRS: {fail_links}')
+                if len(links) == 0:
+                    logging.info('PAGE DOWN')
+                    counter = 40
+                    break
+                time.sleep(5)
+                counter += 1
+                if f"<span>{value[1]}</span>" in driver.page_source or counter > 30:
+                    break
+            time.sleep(5)
+            links_all = driver.find_elements(
+                By.CSS_SELECTOR,
+                "article.job-card-newstyle__JobCardComponentNew-sc-xm76f6-0"
+            )
+            for l in links_all:
+                url_vacancy.append(
+                l
+                .find_element(By.TAG_NAME,'a')
+                .get_attribute("href") + ' ' + key
+                )
+        logging.info(f"End country {key}. Total vacancy {len(list(set(url_vacancy)))}")
+    driver.close()
+    driver.quit()
+    return list(set(url_vacancy))
 
 def scrap_links(match_dads, match_junior, list_url_vacancy, set_driver):
     global today
@@ -153,10 +181,11 @@ def scrap_links(match_dads, match_junior, list_url_vacancy, set_driver):
             date = today
             source = "https://www.monster.com/"
             try:
-                location = driver.find_element(
+                city = driver.find_element(
                     By.CLASS_NAME,
                     'headerstyle__JobViewHeaderLocation-sc-1ijq9nh-4'
                 ).text
+                location = location_сell(city, key)
             except:
                 location = ''
             try:
@@ -183,8 +212,8 @@ def scrap_links(match_dads, match_junior, list_url_vacancy, set_driver):
                 description = ''
             try:
                 salary = driver.find_element(
-                    By.CLASS_NAME,
-                    'salarystyle__SalaryContainer-sc-1kub5et-7'
+                    By.CSS_SELECTOR,
+                    "div[data-testid='svx_jobview-salary']"
                 ).text
             except:
                 salary = ''
