@@ -35,10 +35,15 @@ dag = DAG(dag_id="parser", catchup=False,
         tags=["parser"])
 
 env_vars = {"AWS_ACCESS_KEY_ID": Variable.get("PARSER_AWS_ACCESS_KEY_ID"),
-       "AWS_SECRET_ACCESS_KEY": Variable.get("PARSER_AWS_SECRET_ACCESS_KEY"),
-       "AWS_DEFAULT_REGION": Variable.get("PARSER_AWS_DEFAULT_REGION")}
+            "AWS_SECRET_ACCESS_KEY": Variable.get("PARSER_AWS_SECRET_ACCESS_KEY"),
+            "AWS_DEFAULT_REGION": Variable.get("PARSER_AWS_DEFAULT_REGION"),
+            "CH_CLUSTER_URL": Variable.get("PARSER_CH_CLUSTER_URL"),
+            "CH_PASSWORD": Variable.get("PARSER_CH_PASSWORD"),
+            "CH_DB": Variable.get("PARSER_CH_DB"),
+            "CH_USERNAME": Variable.get("PARSER_CH_USERNAME"),
+}
 
-t1 = DockerOperator(image="physci/dreamparser",
+parse = DockerOperator(image="physci/dreamparser",
                     auto_remove=True,
                     container_name="parser",
                     tty=True,
@@ -46,5 +51,13 @@ t1 = DockerOperator(image="physci/dreamparser",
                     dag=dag,
                     environment=env_vars)
 
+upload = DockerOperator(image="physci/dreamparser:db",
+                        auto_remove=True,
+                        container_name="upload",
+                        tty=True,
+                        task_id="upload",
+                        dag=dag,
+                        environment=env_vars)
 
-t1
+
+parse >> upload
