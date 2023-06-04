@@ -34,7 +34,7 @@ def setup_logging(logfile=None, loglevel="INFO"):
     formatter = logging.Formatter(fmt)
 
     ch = logging.StreamHandler()
-    if os.environ["JSONLOG"]:
+    if os.getenv("JSONLOG", False):
         ch.setFormatter(YcLoggingFormatter('%(message)s %(level)s %(logger)s'))
     else:
         ch.setFormatter(formatter)
@@ -70,10 +70,7 @@ def get_driver() -> webdriver.Chrome:
         options.add_argument("--remote-debugging-port=9222")
         options.add_argument('--disable-gpu')
         options.add_argument("--log-level=3")
-        if os.environ['PORT']:
-            driver = webdriver.Chrome("./driver/chromedriver", options=options, port=os.environ["PORT"])
-        else:
-            driver = webdriver.Chrome("./driver/chromedriver", options=options)
+        driver = webdriver.Chrome("./driver/chromedriver", options=options)
     return driver
 
 
