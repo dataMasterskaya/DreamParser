@@ -97,7 +97,8 @@ def scrape_job_cards(url: str, days_ago: str) -> List[Tuple[str, str, str, str, 
                 source = 'vseti'
                 location = location_type.split(',', 1)[0]
                 skills = ''
-                job_type = str(location_type.rsplit(',', 1)[-1])
+                #job_type = str(location_type.rsplit(',', 1)[-1])
+                job_type = ''
                 salary = soup.find('a').find_all('p', class_='paragraph-8')
                 if salary is not None:
                     salary = salary[1].text.strip()
