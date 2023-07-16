@@ -24,6 +24,27 @@ TABLENAME = "raw"
 _logger = logging.getLogger(__file__)
 
 
+def creat_table(client: Client):
+    s = f"""
+            CREATE TABLE IF NOT EXISTS {TABLENAME} (
+                title TEXT,
+                company TEXT,
+                country Nullable(TEXT),
+                location Nullable(TEXT),
+                salary Nullable(TEXT),
+                source TEXT,
+                link TEXT,
+                date DATE,
+                company_field Nullable(TEXT),
+                description Nullable(TEXT),
+                skills Nullable(TEXT),
+                job_type Nullable(TEXT)
+            ) ENGINE=ReplacingMergeTree(date)
+            ORDER BY (title, company, source, link);
+            """
+    client.execute(s)
+
+
 def setup_logging(logfile=None, loglevel="INFO"):
     """
 
@@ -81,6 +102,8 @@ def get_s3_objects():
 def main(date):
     objects = get_s3_objects()
     ch_client=get_ch_client()
+
+    #creat_table(ch_client)
 
     for file in objects:
         _logger.info("Upload S3 object %s", file)

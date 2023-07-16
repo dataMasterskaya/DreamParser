@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 from utils import setup_logging, write_to_csv
 import json
 import logging
+from typing import List
 
 job_offer_title =  f'SQL NAME:("Аналитик" or "Analyst" or "Data Scientist" or "Дата саентист" or "ML")'
 experiences = ['noExperience', 'between1And3']
@@ -14,7 +15,7 @@ experiences = ['noExperience', 'between1And3']
 _logger = logging.getLogger(__name__)
 
 
-def get_url(job_offer_title, experiences, days_ago):
+def get_url(job_offer_title: str, experiences: List, days_ago: int):
     """
     Здесь мы собираем ссылки на все вакансии в зависимости от опыта на выходе получаем список ссылок
 
@@ -33,6 +34,23 @@ def get_url(job_offer_title, experiences, days_ago):
         list_url.append(url)
     return list_url
 
+
+def get_salary(item):
+    if item["salary"] is None:
+        return "?"
+
+    if item["salary"]["from"] is None:
+        salary = "?"
+    else:
+        salary = str(item["salary"]["from"])
+    salary = salary + " - "
+    if item["salary"]["to"] is None:
+        salary = salary + "?"
+    else:
+        salary = salary + str(item["salary"]["to"])
+    if item["salary"]["currency"] is not None:
+        salary = salary + item["salary"]["currency"]
+    return salary
 
 def get_info(urls):
     """
@@ -72,26 +90,30 @@ def get_info(urls):
             list_offers.append(item['employer']['name'])
             list_offers.append('Russia')
             list_offers.append(item['area']['name'])
-            list_offers.append(item['area']['name'])
-            try:
-                list_offers.append(item['salary']['to'] + ' ' + item['salary']['from'] + ' '+ item['salary']['currency'])
-            except Exception as err:
-                list_offers.append('')
-                _logger.warning(repr(err))
-
+            list_offers.append(get_salary(item))
             list_offers.append('hh.ru')
             list_offers.append(item['alternate_url'])
+            #date
+            list_offers.append(datetime.now().date().strftime("%Y-%m-%d"))
+            #company field
             try:
-                list_offers.append(BeautifulSoup(json.loads(requests.get(item['url']).text)['description'], "html.parser").get_text())
+                list_offers.append(item['department']['name'])
+            except TypeError:
+                list_offers.append('')
             except Exception as err:
                 list_offers.append('')
                 _logger.warning(repr(err))
 
+            # description
+            description = ""
             try:
-                list_offers.append(item['department']['name'])
+                description = BeautifulSoup(json.loads(requests.get(item['url']).text)['description'], "html.parser").get_text()
             except Exception as err:
-                list_offers.append('')
-                _logger.warning(repr(err))
+                _logger.warning("Parse html page error %r", err)
+            list_offers.append(description)
+
+             # skils
+            list_offers.append("")
 
             list_offers.append(item['employment']['name'])
             results.append(list_offers)
@@ -104,13 +126,15 @@ def parse_args():
     функция используется для получения аргументов командной строки, которые передаются скрипту
     """
     parser = argparse.ArgumentParser(description='Scrapes job postings from hh.ru')
-    parser.add_argument('-f', '--filename', type=str, help='Name of output file', default=f'{date.today()}_hh.csv')
+    parser.add_argument('-f', '--filename', type=str, help='Name of output file', default=None)
     parser.add_argument('-d', '--days', type=int, help='Number of days to subtract from the current date',
                         default=1)
     return vars(parser.parse_args())
 
 
-def main(filename, days):
+def main(filename=None, days=1):
+    if filename is None:
+        filename=f'{date.today()}_hh.csv'
     """it is final countdown"""
     urls = get_url(job_offer_title, experiences, days)
     results = get_info(urls)

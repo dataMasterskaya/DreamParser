@@ -1,6 +1,7 @@
 from utils import setup_logging
 from vseti import main as parse_vseti
 from habr import main as parse_habr
+from hh import main as parse_hh
 import boto3
 from botocore.exceptions import BotoCoreError
 import os
@@ -31,6 +32,7 @@ def main():
     _logger.info("Run parse process")
     parse_vseti(days=2)
     parse_habr()
+    parse_hh()
     upload_s3()
 
 
